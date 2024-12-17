@@ -1,6 +1,6 @@
-# Next.js 15 Boilerplate
+# Next.js 15 Boilerplate with Supabase
 
-A modern, feature-rich boilerplate for SaaS applications built with Next.js 15, TypeScript, Supabase, and a dual UI strategy using shadcn/ui and Aceternity UI.
+A modern, feature-rich boilerplate for SaaS applications built with Next.js 15, TypeScript, Supabase, and Prisma. This project includes authentication, blog functionality, and subscription management out of the box.
 
 ## Features
 
@@ -9,111 +9,115 @@ A modern, feature-rich boilerplate for SaaS applications built with Next.js 15, 
 - **Supabase** for authentication and database
 - **Prisma** for type-safe database queries
 - **Tailwind CSS** for styling
-- **Dual UI Strategy**:
-  - shadcn/ui for core application components
-  - Aceternity UI for marketing pages (Phase 2)
+- **Role-Based Access Control**
+- **Subscription Management**
+- **Blog System**
 
-## UI Implementation Strategy
+## Prerequisites
 
-### Phase 1: Core Application UI
-- **shadcn/ui Components**: Primary component library
-- **Implementation Areas**: Dashboard, Auth, Blog, Admin sections
-- **Integration**: Deep integration with Tailwind CSS
-- **Focus**: Functionality and consistency
+- Node.js 18.17 or later
+- npm or yarn
+- Supabase account
+- Git
 
-### Phase 2: Marketing UI Enhancement
-- **Aceternity UI**: Enhanced marketing components
-- **Implementation Areas**: Landing pages, public sections
-- **Focus**: Animated interactions and visual appeal
-- **Performance**: Lazy-loaded for optimal bundle size
-
-## Getting Started
+## Quick Start
 
 1. Clone the repository:
-```bash
-git clone [repository-url]
-cd [project-name]
-```
+   ```bash
+   git clone [your-repo-url]
+   cd [your-project-name]
+   ```
 
 2. Install dependencies:
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
 3. Set up environment variables:
-```bash
-cp .env.example .env.local
-```
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env` with your Supabase credentials.
 
-4. Initialize Supabase and update environment variables:
-- Create a Supabase project
-- Add credentials to .env.local
+4. Set up Supabase:
+   - Create a new project in Supabase
+   - Enable database access
+   - Configure authentication providers
+   - Add your IP to the allowlist if using IPv4
 
-5. Run database migrations:
-```bash
-npx prisma migrate dev
-```
+5. Initialize the database:
+   ```bash
+   npx prisma generate
+   npx prisma migrate dev
+   ```
 
 6. Start the development server:
-```bash
-npm run dev
-```
+   ```bash
+   npm run dev
+   ```
 
-## Component Organization
+## Project Structure
 
 ```
 /src
-  /components
-    /ui          # shadcn/ui core components
-    /marketing   # Aceternity UI components (Phase 2)
-    /layout      # Shared layouts
+  /app             # Next.js 13+ app directory
+  /components      # React components
+  /lib            # Utility functions and types
+  /utils          # Helper functions
+  /prisma         # Database schema and migrations
 ```
 
-## Best Practices
+## Authentication
 
-### Component Usage
-- Use shadcn/ui components for all core application features
-- Reserve Aceternity UI components for marketing pages
-- Maintain clear separation between application and marketing components
+This boilerplate uses Supabase Authentication with:
+- Email/Password sign-in
+- Magic link authentication
+- OAuth providers (configurable)
+- Session management
 
-### Performance Considerations
-- Marketing components are lazy-loaded
-- Bundle size optimization through component separation
-- Careful management of animation libraries
+## Database Schema
 
-## Development Workflow
+The project includes a basic schema with:
+- User management
+- Blog posts
+- Subscription tiers
+- Role-based access control
 
-1. **TypeScript-First Development**
-   - Strict type checking enabled
-   - Component props fully typed
-   - Utility functions type-safe
+## Available Scripts
 
-2. **Component Development**
-   - Follow shadcn/ui patterns for core components
-   - Document component usage and props
-   - Include accessibility considerations
-
-3. **Testing**
-   - Unit tests for components
-   - Integration tests for features
-   - Performance monitoring
-
-## Learn More
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [shadcn/ui Documentation](https://ui.shadcn.com)
-- [Aceternity UI Documentation](https://ui.aceternity.com)
-- [Supabase Documentation](https://supabase.com/docs)
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run type-check` - Run TypeScript checks
 
 ## Deployment
 
-Deploy your application using Vercel:
-
-```bash
-npm run build
-npm run start
-```
+1. Configure production environment variables
+2. Deploy to Vercel:
+   ```bash
+   vercel
+   ```
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For support, email [your-email] or open an issue in the repository.
+
+## Acknowledgments
+
+- Next.js team
+- Supabase team
+- Prisma team
+- Open source community

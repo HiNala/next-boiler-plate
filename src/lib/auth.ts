@@ -1,6 +1,28 @@
 import { supabase } from './supabaseClient'
 import type { AuthError, Session, AuthUser } from './types/auth'
-import type { SubscriptionStatus, UserRole, SubscriptionTier } from '@prisma/client'
+
+// Define the enums locally to match Prisma's schema
+const UserRole = {
+  USER: 'USER',
+  ADMIN: 'ADMIN'
+} as const
+
+const SubscriptionTier = {
+  FREE: 'FREE',
+  PRO: 'PRO',
+  ENTERPRISE: 'ENTERPRISE'
+} as const
+
+const SubscriptionStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  PAST_DUE: 'PAST_DUE',
+  CANCELLED: 'CANCELLED'
+} as const
+
+type UserRole = typeof UserRole[keyof typeof UserRole]
+type SubscriptionTier = typeof SubscriptionTier[keyof typeof SubscriptionTier]
+type SubscriptionStatus = typeof SubscriptionStatus[keyof typeof SubscriptionStatus]
 
 export async function signIn(email: string, password: string): Promise<{ error: AuthError | null }> {
   const { error } = await supabase.auth.signInWithPassword({
@@ -57,7 +79,7 @@ export async function getSession(): Promise<{ session: Session | null; error: Au
     role: (session.user.user_metadata?.role || 'USER') as UserRole,
     subscriptionTier: (session.user.user_metadata?.subscriptionTier || 'FREE') as SubscriptionTier,
     subscriptionStatus: (session.user.user_metadata?.subscriptionStatus || 'INACTIVE') as SubscriptionStatus,
-    emailVerified: Boolean(session.user.email_confirmed),
+    emailVerified: Boolean(session.user.email_confirmed_at),
     subscriptionEndsAt: session.user.user_metadata?.subscriptionEndsAt ? new Date(session.user.user_metadata.subscriptionEndsAt) : null,
     lastPaymentAt: session.user.user_metadata?.lastPaymentAt ? new Date(session.user.user_metadata.lastPaymentAt) : null,
     avatar: session.user.user_metadata?.avatar || null,

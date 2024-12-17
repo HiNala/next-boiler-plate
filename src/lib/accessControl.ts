@@ -1,5 +1,27 @@
-import type { UserRole, SubscriptionTier, SubscriptionStatus } from '@prisma/client'
 import type { AuthUser } from './types/auth'
+
+// Define the enums locally to match Prisma's schema
+const UserRole = {
+  USER: 'USER',
+  ADMIN: 'ADMIN'
+} as const
+
+const SubscriptionTier = {
+  FREE: 'FREE',
+  PRO: 'PRO',
+  ENTERPRISE: 'ENTERPRISE'
+} as const
+
+const SubscriptionStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  PAST_DUE: 'PAST_DUE',
+  CANCELLED: 'CANCELLED'
+} as const
+
+type UserRole = typeof UserRole[keyof typeof UserRole]
+type SubscriptionTier = typeof SubscriptionTier[keyof typeof SubscriptionTier]
+type SubscriptionStatus = typeof SubscriptionStatus[keyof typeof SubscriptionStatus]
 
 export function isAdmin(user: AuthUser | null): boolean {
   if (!user) return false
