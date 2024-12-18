@@ -15,10 +15,10 @@ const updatePostSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const post = await getPost(params.id)
+    const post = await getPost(context.params.id)
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
@@ -30,7 +30,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     const supabase = await createClient()
@@ -45,7 +45,7 @@ export async function PATCH(
     const json = await request.json()
     const validatedData = updatePostSchema.parse(json)
     
-    const post = await updatePost(params.id, validatedData, user)
+    const post = await updatePost(context.params.id, validatedData, user)
     return NextResponse.json(post)
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -60,7 +60,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     const supabase = await createClient()
@@ -72,7 +72,7 @@ export async function DELETE(
 
     const user = mapSupabaseUser(session.user)
 
-    await deletePost(params.id, user)
+    await deletePost(context.params.id, user)
     return new NextResponse(null, { status: 204 })
   } catch (error) {
     if (error instanceof Error && error.message === 'Unauthorized') {
