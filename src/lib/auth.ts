@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient'
+import { createClient } from '@/utils/supabase/client'
 import type { AuthError, Session, AuthUser } from './types/auth'
 
 // Define the enums locally to match Prisma's schema
@@ -25,6 +25,7 @@ type SubscriptionTier = typeof SubscriptionTier[keyof typeof SubscriptionTier]
 type SubscriptionStatus = typeof SubscriptionStatus[keyof typeof SubscriptionStatus]
 
 export async function signIn(email: string, password: string): Promise<{ error: AuthError | null }> {
+  const supabase = createClient()
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -38,6 +39,7 @@ export async function signIn(email: string, password: string): Promise<{ error: 
 }
 
 export async function signUp(email: string, password: string): Promise<{ error: AuthError | null }> {
+  const supabase = createClient()
   const { error } = await supabase.auth.signUp({
     email,
     password,
@@ -51,6 +53,7 @@ export async function signUp(email: string, password: string): Promise<{ error: 
 }
 
 export async function signOut(): Promise<{ error: AuthError | null }> {
+  const supabase = createClient()
   const { error } = await supabase.auth.signOut()
 
   if (error) {
@@ -61,6 +64,7 @@ export async function signOut(): Promise<{ error: AuthError | null }> {
 }
 
 export async function getSession(): Promise<{ session: Session | null; error: AuthError | null }> {
+  const supabase = createClient()
   const { data: { session }, error } = await supabase.auth.getSession()
   
   if (error) {

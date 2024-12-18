@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { AuthTest } from '@/app/test/auth-test'
+import { AuthTest } from './auth-test'
 
 export default async function TestPage() {
   const supabase = await createClient()
