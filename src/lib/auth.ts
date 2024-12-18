@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 import type { AuthError, Session, AuthUser } from './types/auth'
 
 // Define the enums locally to match Prisma's schema
