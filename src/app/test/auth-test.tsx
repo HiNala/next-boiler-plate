@@ -24,7 +24,7 @@ export function AuthTest() {
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [supabase.auth])
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()

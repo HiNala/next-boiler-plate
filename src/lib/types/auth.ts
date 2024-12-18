@@ -1,5 +1,3 @@
-import { Prisma } from '@prisma/client'
-
 export type UserRole = 'USER' | 'ADMIN'
 export type SubscriptionTier = 'FREE' | 'PRO' | 'ENTERPRISE'
 export type SubscriptionStatus = 'ACTIVE' | 'INACTIVE' | 'PAST_DUE' | 'CANCELLED'
@@ -18,7 +16,7 @@ export type AuthUser = {
   bio: string | null
   createdAt: Date
   updatedAt: Date
-  posts: any[]
+  posts: Post[]
 }
 
 export type Session = {
@@ -29,4 +27,19 @@ export type Session = {
 export type AuthError = {
   message: string
   code?: string
+}
+
+type Post = {
+  id: string
+  title: string
+  slug: string
+  description?: string | null
+  content: string
+  published: boolean
+  thumbnail?: string | null
+  tags: string[]
+  authorId: string
+  createdAt: Date
+  updatedAt: Date
+  publishedAt?: Date | null
 } 

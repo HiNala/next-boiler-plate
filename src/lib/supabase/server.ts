@@ -19,6 +19,7 @@ export const createClient = async () => {
             // The `set` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
+            console.debug('Cookie set error (expected in Server Component):', error)
           }
         },
         remove(name: string, options: CookieOptions) {
@@ -28,6 +29,7 @@ export const createClient = async () => {
             // The `delete` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
+            console.debug('Cookie delete error (expected in Server Component):', error)
           }
         },
       },

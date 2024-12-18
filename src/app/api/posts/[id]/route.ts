@@ -24,6 +24,7 @@ export async function GET(
     }
     return NextResponse.json(post)
   } catch (error) {
+    console.error('Error fetching post:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
@@ -54,6 +55,7 @@ export async function PATCH(
     if (error instanceof Error && error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    console.error('Error updating post:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
@@ -78,6 +80,7 @@ export async function DELETE(
     if (error instanceof Error && error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    console.error('Error deleting post:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 } 

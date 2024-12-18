@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import { AuthUser } from '@/lib/types/auth'
 import { canEditPost } from '@/lib/accessControl'
+import { Prisma } from '@prisma/client'
 
 export type CreatePostInput = {
   title: string
@@ -36,7 +37,7 @@ export async function updatePost(id: string, input: UpdatePostInput, user: AuthU
     throw new Error('Unauthorized')
   }
 
-  const updates: any = { ...input }
+  const updates: Prisma.PostUpdateInput = { ...input }
   if (input.title) {
     updates.slug = generateSlug(input.title)
   }
@@ -105,7 +106,7 @@ export async function getPosts(options: {
 }) {
   const { take = 10, skip = 0, authorId, published } = options
 
-  const where: any = {}
+  const where: Prisma.PostWhereInput = {}
   if (authorId) where.authorId = authorId
   if (published !== undefined) where.published = published
 

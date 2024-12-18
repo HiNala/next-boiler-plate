@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { redirect } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { ProfileForm } from '@/components/forms/profile-form'
 
@@ -28,10 +29,12 @@ export default async function ProfilePage() {
         <div className="space-y-6">
           <div className="flex items-center gap-4">
             {session.user.user_metadata?.avatar && (
-              <img
+              <Image
                 src={session.user.user_metadata.avatar}
-                alt={session.user.user_metadata?.name || session.user.email}
-                className="w-16 h-16 rounded-full"
+                alt={session.user.user_metadata?.name || session.user.email || 'User avatar'}
+                width={64}
+                height={64}
+                className="rounded-full"
               />
             )}
             <div>

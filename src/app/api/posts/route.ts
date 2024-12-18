@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 })
     }
+    console.error('Error creating post:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
@@ -53,6 +54,7 @@ export async function GET(request: NextRequest) {
     const posts = await getPosts({ take, skip, authorId, published })
     return NextResponse.json(posts)
   } catch (error) {
+    console.error('Error fetching posts:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 } 

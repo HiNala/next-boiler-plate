@@ -15,7 +15,7 @@ export default function VerifyEmailPage() {
             Check your email
           </h1>
           <p className="text-sm text-muted-foreground">
-            We've sent you a verification link. Please check your email to verify your account.
+            We&apos;ve sent you a verification link. Please check your email to verify your account.
           </p>
         </div>
         <div className="grid gap-4">
@@ -30,7 +30,7 @@ export default function VerifyEmailPage() {
             {' '}to your account.
           </p>
           <p className="px-8 text-center text-sm text-muted-foreground">
-            Didn't receive the email?{' '}
+            Didn&apos;t receive the email?{' '}
             <Link 
               href="/register" 
               className="hover:text-brand underline underline-offset-4"
