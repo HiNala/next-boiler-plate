@@ -33,7 +33,11 @@ export async function updatePost(id: string, input: UpdatePostInput, user: AuthU
     select: { authorId: true },
   })
 
-  if (!post || !canEditPost(user, post.authorId)) {
+  if (!post) {
+    throw new Error('Not Found')
+  }
+
+  if (!canEditPost(user, post.authorId)) {
     throw new Error('Unauthorized')
   }
 
@@ -57,7 +61,11 @@ export async function deletePost(id: string, user: AuthUser) {
     select: { authorId: true },
   })
 
-  if (!post || !canEditPost(user, post.authorId)) {
+  if (!post) {
+    throw new Error('Not Found')
+  }
+
+  if (!canEditPost(user, post.authorId)) {
     throw new Error('Unauthorized')
   }
 
@@ -67,7 +75,7 @@ export async function deletePost(id: string, user: AuthUser) {
 }
 
 export async function getPost(id: string) {
-  return prisma.post.findUnique({
+  const post = await prisma.post.findUnique({
     where: { id },
     include: {
       author: {
@@ -80,10 +88,16 @@ export async function getPost(id: string) {
       },
     },
   })
+
+  if (!post) {
+    throw new Error('Not Found')
+  }
+
+  return post
 }
 
 export async function getPostBySlug(slug: string) {
-  return prisma.post.findUnique({
+  const post = await prisma.post.findUnique({
     where: { slug },
     include: {
       author: {
@@ -96,6 +110,12 @@ export async function getPostBySlug(slug: string) {
       },
     },
   })
+
+  if (!post) {
+    throw new Error('Not Found')
+  }
+
+  return post
 }
 
 export async function getPosts(options: {

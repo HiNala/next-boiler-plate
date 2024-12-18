@@ -16,6 +16,11 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
+import { toast } from '@/components/ui/use-toast'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { cn } from '@/lib/utils'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 const postSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -31,6 +36,11 @@ type PostFormValues = z.infer<typeof postSchema>
 interface PostFormProps {
   initialData?: PostFormValues
   postId?: string
+}
+
+interface ApiError {
+  path: string[]
+  message: string
 }
 
 export function PostForm({ initialData, postId }: PostFormProps) {
@@ -61,14 +71,32 @@ export function PostForm({ initialData, postId }: PostFormProps) {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to save post')
+        const error = await response.json()
+        if (error.errors) {
+          error.errors.forEach((err: ApiError) => {
+            form.setError(err.path[0] as keyof PostFormValues, {
+              message: err.message,
+            })
+          })
+          return
+        }
+        throw new Error(error.message || 'Failed to save post')
       }
 
       const post = await response.json()
+      toast({
+        title: postId ? 'Post updated' : 'Post created',
+        description: postId ? 'Your post has been updated.' : 'Your post has been created.',
+      })
       router.push(`/admin/blog/${post.id}/edit`)
       router.refresh()
     } catch (error) {
       console.error('Error saving post:', error)
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to save post',
+        variant: 'destructive',
+      })
     } finally {
       setIsLoading(false)
     }
@@ -117,13 +145,34 @@ export function PostForm({ initialData, postId }: PostFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Content</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Write your post content here"
-                  className="min-h-[300px]"
-                  {...field}
-                />
-              </FormControl>
+              <Tabs defaultValue="write" className="w-full">
+                <TabsList className="mb-2">
+                  <TabsTrigger value="write">Write</TabsTrigger>
+                  <TabsTrigger value="preview">Preview</TabsTrigger>
+                </TabsList>
+                <TabsContent value="write">
+                  <FormControl>
+                    <Textarea
+                      placeholder="Write your post content here using Markdown"
+                      className="min-h-[300px] font-mono"
+                      {...field}
+                    />
+                  </FormControl>
+                </TabsContent>
+                <TabsContent value="preview">
+                  <div className={cn(
+                    "rounded-md border border-input bg-background px-3 py-2 min-h-[300px]",
+                    "prose prose-sm md:prose-base lg:prose-lg dark:prose-invert"
+                  )}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {field.value || '*No content yet*'}
+                    </ReactMarkdown>
+                  </div>
+                </TabsContent>
+              </Tabs>
+              <FormDescription>
+                Write your post content using Markdown. You can preview how it will look using the Preview tab.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
