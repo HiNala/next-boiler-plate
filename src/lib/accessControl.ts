@@ -23,6 +23,7 @@ type UserRole = typeof UserRole[keyof typeof UserRole]
 type SubscriptionTier = typeof SubscriptionTier[keyof typeof SubscriptionTier]
 type SubscriptionStatus = typeof SubscriptionStatus[keyof typeof SubscriptionStatus]
 
+// Base permission checks
 export function isAdmin(user: AuthUser | null): boolean {
   if (!user) return false
   return user.role === UserRole.ADMIN
@@ -41,18 +42,44 @@ export function hasSubscription(user: AuthUser | null, minimumTier: Subscription
   return tiers[user.subscriptionTier] >= tiers[minimumTier]
 }
 
+// Access control functions
 export function canAccessDashboard(user: AuthUser | null): boolean {
   if (!user) return false
-  return user.subscriptionStatus === SubscriptionStatus.ACTIVE || user.role === UserRole.ADMIN
+  return user.subscriptionStatus === SubscriptionStatus.ACTIVE || isAdmin(user)
 }
 
+// Content management permissions
 export function canManagePosts(user: AuthUser | null): boolean {
-  if (!user) return false
   return isAdmin(user)
 }
 
 export function canEditPost(user: AuthUser | null, authorId: string): boolean {
   if (!user) return false
-  if (user.role === UserRole.ADMIN) return true
-  return user.id === authorId && user.subscriptionStatus === SubscriptionStatus.ACTIVE
-} 
+  return isAdmin(user) || user.id === authorId
+}
+
+export function canManageComments(user: AuthUser | null): boolean {
+  return isAdmin(user)
+}
+
+export function canEditComment(user: AuthUser | null, authorId: string): boolean {
+  if (!user) return false
+  return isAdmin(user) || user.id === authorId
+}
+
+export function canManageTags(user: AuthUser | null): boolean {
+  return isAdmin(user)
+}
+
+// User and system management permissions
+export function canManageUsers(user: AuthUser | null): boolean {
+  return isAdmin(user)
+}
+
+export function canManageSettings(user: AuthUser | null): boolean {
+  return isAdmin(user)
+}
+
+export function canManageSubscriptions(user: AuthUser | null): boolean {
+  return isAdmin(user)
+}

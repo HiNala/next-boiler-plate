@@ -2,28 +2,39 @@ import { prisma } from '@/lib/db'
 import type { Post, Prisma } from '@prisma/client'
 import type { BlogPost, CreatePostInput, UpdatePostInput } from '@/lib/types/blog'
 import { generateSlug } from '@/lib/utils'
+import { NotFoundError, ValidationError } from '@/lib/errors'
+import type { PostWhereInput, PostPaginationInput } from '@/lib/validations/blog'
 
 export class BlogRepository {
   async createPost(input: CreatePostInput & { authorId: string }): Promise<BlogPost> {
-    const slug = generateSlug(input.title)
-    
-    return prisma.post.create({
-      data: {
-        ...input,
-        slug,
-        publishedAt: input.published ? new Date() : null,
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true,
+    try {
+      const slug = generateSlug(input.title)
+      
+      return await prisma.post.create({
+        data: {
+          ...input,
+          slug,
+          publishedAt: input.published ? new Date() : null,
+        },
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar: true,
+            },
           },
         },
-      },
-    })
+      })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ValidationError('A post with this title already exists')
+        }
+      }
+      throw error
+    }
   }
 
   async updatePost(id: string, input: UpdatePostInput): Promise<BlogPost> {
@@ -35,36 +46,57 @@ export class BlogRepository {
       updates.publishedAt = input.published ? new Date() : null
     }
 
-    return prisma.post.update({
-      where: { id },
-      data: updates,
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true,
+    try {
+      return await prisma.post.update({
+        where: { id },
+        data: updates,
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar: true,
+            },
           },
         },
-      },
-    })
+      })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundError('Post')
+        }
+        if (error.code === 'P2002') {
+          throw new ValidationError('A post with this title already exists')
+        }
+      }
+      throw error
+    }
   }
 
   async deletePost(id: string): Promise<BlogPost> {
-    return prisma.post.delete({
-      where: { id },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true,
+    try {
+      return await prisma.post.delete({
+        where: { id },
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar: true,
+            },
           },
         },
-      },
-    })
+      })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundError('Post')
+        }
+      }
+      throw error
+    }
   }
 
   async getPost(id: string): Promise<BlogPost | null> {
@@ -99,23 +131,17 @@ export class BlogRepository {
     })
   }
 
-  async getPosts(options: {
-    take?: number
-    skip?: number
-    authorId?: string
-    published?: boolean
-  }): Promise<BlogPost[]> {
-    const { take = 10, skip = 0, authorId, published } = options
-
-    const where: Prisma.PostWhereInput = {}
-    if (authorId) where.authorId = authorId
-    if (published !== undefined) where.published = published
+  async getPosts(
+    where: PostWhereInput = {},
+    pagination: PostPaginationInput = {}
+  ): Promise<BlogPost[]> {
+    const { take = 10, skip = 0, orderBy = 'createdAt', order = 'desc' } = pagination
 
     return prisma.post.findMany({
       where,
       take,
       skip,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { [orderBy]: order },
       include: {
         author: {
           select: {
@@ -127,5 +153,9 @@ export class BlogRepository {
         },
       },
     })
+  }
+
+  async getPostCount(where: PostWhereInput = {}): Promise<number> {
+    return prisma.post.count({ where })
   }
 } 

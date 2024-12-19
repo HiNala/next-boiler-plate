@@ -49,6 +49,17 @@ model User {
   posts            Post[]
 }
 
+model Tag {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  color       String?
+  metadata    Json?     @default("{}")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  posts       Post[]    @relation("PostToTag")
+}
+
 model Post {
   id          String    @id @default(uuid())
   title       String
@@ -57,7 +68,7 @@ model Post {
   content     String
   published   Boolean   @default(false)
   thumbnail   String?
-  tags        String[]
+  tags        Tag[]     @relation("PostToTag")
   authorId    String
   author      User      @relation(fields: [authorId], references: [id])
   createdAt   DateTime  @default(now())

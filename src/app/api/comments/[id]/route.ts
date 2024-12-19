@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { updatePost, deletePost, getPost } from '@/lib/services/blog'
+import { updateComment, deleteComment, getComment } from '@/lib/services/comment'
 import { getAuthUser } from '@/lib/auth'
-import { UpdatePostSchema } from '@/lib/validations/blog'
+import { CommentUpdateSchema } from '@/lib/validations/comment'
 import { AppError } from '@/lib/errors'
 import { z } from 'zod'
 
@@ -14,13 +14,13 @@ export async function GET(
   context: RouteContext
 ) {
   try {
-    const post = await getPost(context.params.id)
+    const comment = await getComment(context.params.id)
     
     // Set cache headers for GET requests
     const headers = new Headers()
     headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate')
     
-    return NextResponse.json(post, { headers })
+    return NextResponse.json(comment, { headers })
   } catch (error) {
     if (error instanceof AppError) {
       return NextResponse.json(
@@ -28,7 +28,7 @@ export async function GET(
         { status: error.statusCode }
       )
     }
-    console.error('Error in GET /api/posts/[id]:', error)
+    console.error('Error in GET /api/comments/[id]:', error)
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
@@ -47,10 +47,10 @@ export async function PUT(
     }
 
     const json = await request.json()
-    const body = UpdatePostSchema.parse(json)
+    const body = CommentUpdateSchema.parse(json)
 
-    const post = await updatePost(context.params.id, body, user)
-    return NextResponse.json(post)
+    const comment = await updateComment(context.params.id, body, user)
+    return NextResponse.json(comment)
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -64,7 +64,7 @@ export async function PUT(
         { status: error.statusCode }
       )
     }
-    console.error('Error in PUT /api/posts/[id]:', error)
+    console.error('Error in PUT /api/comments/[id]:', error)
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
@@ -82,7 +82,7 @@ export async function DELETE(
       throw new AppError('Unauthorized', 401)
     }
 
-    await deletePost(context.params.id, user)
+    await deleteComment(context.params.id, user)
     return new NextResponse(null, { status: 204 })
   } catch (error) {
     if (error instanceof AppError) {
@@ -91,7 +91,7 @@ export async function DELETE(
         { status: error.statusCode }
       )
     }
-    console.error('Error in DELETE /api/posts/[id]:', error)
+    console.error('Error in DELETE /api/comments/[id]:', error)
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

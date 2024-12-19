@@ -8,36 +8,41 @@ import type { BlogPost, CreatePostInput, UpdatePostInput } from '@/lib/types/blo
 import type { AuthUser } from '@/lib/types/auth'
 import { canEditPost } from '@/lib/accessControl'
 import { BlogRepository } from '@/lib/repositories/blog.repository'
+import { ForbiddenError, NotFoundError } from '@/lib/errors'
+import type { PostWhereInput, PostPaginationInput } from '@/lib/validations/blog'
+import { PostSchema, UpdatePostSchema } from '@/lib/validations/blog'
 
 const blogRepository = new BlogRepository()
 
 export async function createPost(input: CreatePostInput, authorId: string): Promise<BlogPost> {
-  return blogRepository.createPost({ ...input, authorId })
+  const validatedInput = PostSchema.parse(input)
+  return blogRepository.createPost({ ...validatedInput, authorId })
 }
 
 export async function updatePost(id: string, input: UpdatePostInput, user: AuthUser): Promise<BlogPost> {
   const post = await blogRepository.getPost(id)
 
   if (!post) {
-    throw new Error('Not Found')
+    throw new NotFoundError('Post')
   }
 
   if (!canEditPost(user, post.authorId)) {
-    throw new Error('Unauthorized')
+    throw new ForbiddenError('You do not have permission to edit this post')
   }
 
-  return blogRepository.updatePost(id, input)
+  const validatedInput = UpdatePostSchema.parse(input)
+  return blogRepository.updatePost(id, validatedInput)
 }
 
 export async function deletePost(id: string, user: AuthUser): Promise<BlogPost> {
   const post = await blogRepository.getPost(id)
 
   if (!post) {
-    throw new Error('Not Found')
+    throw new NotFoundError('Post')
   }
 
   if (!canEditPost(user, post.authorId)) {
-    throw new Error('Unauthorized')
+    throw new ForbiddenError('You do not have permission to delete this post')
   }
 
   return blogRepository.deletePost(id)
@@ -47,7 +52,7 @@ export async function getPost(id: string): Promise<BlogPost> {
   const post = await blogRepository.getPost(id)
 
   if (!post) {
-    throw new Error('Not Found')
+    throw new NotFoundError('Post')
   }
 
   return post
@@ -57,17 +62,31 @@ export async function getPostBySlug(slug: string): Promise<BlogPost> {
   const post = await blogRepository.getPostBySlug(slug)
 
   if (!post) {
-    throw new Error('Not Found')
+    throw new NotFoundError('Post')
   }
 
   return post
 }
 
-export async function getPosts(options: {
-  take?: number
-  skip?: number
-  authorId?: string
-  published?: boolean
-}): Promise<BlogPost[]> {
-  return blogRepository.getPosts(options)
+export async function getPosts(
+  where: PostWhereInput = {},
+  pagination: PostPaginationInput = {}
+): Promise<{
+  posts: BlogPost[]
+  total: number
+  hasMore: boolean
+}> {
+  const [posts, total] = await Promise.all([
+    blogRepository.getPosts(where, pagination),
+    blogRepository.getPostCount(where)
+  ])
+
+  const { take = 10, skip = 0 } = pagination
+  const hasMore = skip + take < total
+
+  return {
+    posts,
+    total,
+    hasMore
+  }
 } 
