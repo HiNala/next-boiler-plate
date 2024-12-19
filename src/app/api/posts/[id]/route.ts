@@ -1,3 +1,11 @@
+// TODO: [Type-Safety] Resolve route handler type issues
+// - Issue: NextRequest and NextResponse type conflicts
+// - Priority: Medium
+// - Fix during type-safety pass
+// - Potential solutions:
+//   1. Update Next.js types
+//   2. Verify route handler patterns
+//   3. Consider using Edge Runtime
 import { NextRequest, NextResponse } from 'next/server'
 import { updatePost, deletePost, getPost } from '@/lib/services/blog'
 import { getAuthUser } from '@/lib/auth'

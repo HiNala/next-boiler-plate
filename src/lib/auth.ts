@@ -1,3 +1,11 @@
+// TODO: [Type-Safety] Resolve auth type definition issues
+// - Issue: Supabase and Prisma type conflicts
+// - Priority: High
+// - Fix during type-safety pass
+// - Potential solutions:
+//   1. Create unified auth types
+//   2. Use type assertions where necessary
+//   3. Update Supabase client types
 import { createClient } from '@/lib/supabase/client'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import type { AuthError, Session, AuthUser } from './types/auth'
