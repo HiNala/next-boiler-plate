@@ -11,6 +11,9 @@ import { BlogRepository } from '@/lib/repositories/blog.repository'
 import { ForbiddenError, NotFoundError } from '@/lib/errors'
 import type { PostWhereInput, PostPaginationInput } from '@/lib/validations/blog'
 import { PostSchema, UpdatePostSchema } from '@/lib/validations/blog'
+import { prisma } from '@/lib/db';
+import { Row } from '@/types/database.types';
+import { ApiError } from '@/lib/errors';
 
 const blogRepository = new BlogRepository()
 
@@ -88,5 +91,41 @@ export async function getPosts(
     posts,
     total,
     hasMore
+  }
+}
+
+export async function getPostsByTag(tag: string): Promise<Row<'posts'>[]> {
+  try {
+    return await prisma.posts.findMany({
+      where: {
+        tags: {
+          has: tag
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+  } catch (error) {
+    throw new ApiError('Failed to fetch posts by tag', 500);
+  }
+}
+
+export async function searchPosts(query: string): Promise<Row<'posts'>[]> {
+  try {
+    return await prisma.posts.findMany({
+      where: {
+        OR: [
+          { title: { contains: query, mode: 'insensitive' } },
+          { content: { contains: query, mode: 'insensitive' } },
+          { tags: { has: query } }
+        ]
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+  } catch (error) {
+    throw new ApiError('Failed to search posts', 500);
   }
 } 

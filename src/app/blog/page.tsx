@@ -1,105 +1,67 @@
-import { Metadata } from 'next'
-import Link from 'next/link'
-import Image from 'next/image'
-import { getPosts } from '@/lib/services/blog'
-import { formatDate } from '@/lib/utils'
+import { Suspense } from 'react';
+import { getPosts } from '@/lib/services/blog';
+import { TagFilter } from '@/components/blog/TagFilter';
 
-export const metadata: Metadata = {
-  title: 'Blog',
-  description: 'Latest blog posts and articles',
+export const revalidate = 3600; // Revalidate every hour
+
+async function getAllTags() {
+  const posts = await getPosts();
+  const tags = new Set<string>();
+  posts.forEach(post => post.tags.forEach(tag => tags.add(tag)));
+  return Array.from(tags);
 }
 
-export const revalidate = 3600 // Revalidate every hour
+export default async function BlogPage({
+  searchParams,
+}: {
+  searchParams: { tag?: string };
+}) {
+  const [posts, tags] = await Promise.all([getPosts(), getAllTags()]);
 
-interface BlogPageProps {
-  searchParams: {
-    page?: string
-    tag?: string
-  }
-}
-
-export default async function BlogPage({ searchParams }: BlogPageProps) {
-  const page = Number(searchParams.page) || 1
-  const tag = searchParams.tag
-  const postsPerPage = 10
-  const skip = (page - 1) * postsPerPage
-
-  const posts = await getPosts({
-    take: postsPerPage,
-    skip,
-    published: true,
-  })
+  const filteredPosts = searchParams.tag
+    ? posts.filter(post => post.tags.includes(searchParams.tag!))
+    : posts;
 
   return (
-    <div className="container mx-auto py-8">
+    <main className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold mb-8">Blog</h1>
+      
+      <Suspense fallback={<div>Loading tags...</div>}>
+        <TagFilter tags={tags} />
+      </Suspense>
 
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {posts.map((post) => (
+        {filteredPosts.map((post) => (
           <article
             key={post.id}
-            className="flex flex-col overflow-hidden rounded-lg shadow-lg"
+            className="bg-card rounded-lg shadow-md overflow-hidden"
           >
-            {post.thumbnail && (
-              <div className="relative h-48">
-                <Image
-                  src={post.thumbnail}
-                  alt={post.title}
-                  fill
-                  className="object-cover"
-                />
-              </div>
+            {post.coverImage && (
+              <img
+                src={post.coverImage}
+                alt={post.title}
+                className="w-full h-48 object-cover"
+              />
             )}
-            <div className="flex flex-1 flex-col justify-between bg-white p-6">
-              <div className="flex-1">
-                <Link
-                  href={`/blog/${post.slug}`}
-                  className="block mt-2"
-                >
-                  <h2 className="text-xl font-semibold text-gray-900 hover:text-blue-600">
-                    {post.title}
-                  </h2>
-                </Link>
-                {post.description && (
-                  <p className="mt-3 text-base text-gray-500">
-                    {post.description}
-                  </p>
-                )}
-              </div>
-              <div className="mt-6 flex items-center">
-                <div className="flex-shrink-0">
-                  {post.author.avatar ? (
-                    <Image
-                      className="h-10 w-10 rounded-full"
-                      src={post.author.avatar}
-                      alt={post.author.name || 'Author'}
-                      width={40}
-                      height={40}
-                    />
-                  ) : (
-                    <div className="h-10 w-10 rounded-full bg-gray-200" />
-                  )}
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900">
-                    {post.author.name || 'Anonymous'}
-                  </p>
-                  <div className="flex space-x-1 text-sm text-gray-500">
-                    <time dateTime={post.publishedAt?.toISOString() || post.createdAt.toISOString()}>
-                      {formatDate(post.publishedAt || post.createdAt)}
-                    </time>
-                  </div>
-                </div>
+            <div className="p-6">
+              <h2 className="text-2xl font-semibold mb-2">{post.title}</h2>
+              <p className="text-muted-foreground mb-4">
+                {post.excerpt || post.content.slice(0, 150) + '...'}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {post.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-2 py-1 bg-secondary rounded-full text-xs"
+                  >
+                    #{tag}
+                  </span>
+                ))}
               </div>
             </div>
           </article>
         ))}
       </div>
-
-      {/* Pagination - we'll implement this later */}
-      <div className="mt-8 flex justify-center">
-        {/* Pagination controls will go here */}
-      </div>
-    </div>
-  )
+    </main>
+  );
 } 
