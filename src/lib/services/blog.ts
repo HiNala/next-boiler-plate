@@ -1,8 +1,14 @@
+// TODO: [Type-Safety] Resolve Prisma type definition issues
+// - Issue: PostUpdateInput and PostWhereInput types not recognized
+// - Priority: Medium
+// - Fix during type-safety pass
+// - Related to Prisma client type generation
+// - Current workaround: Using type imports
 import { prisma } from '@/lib/db'
 import { AuthUser } from '@/lib/types/auth'
 import { BlogPost, CreatePostInput, UpdatePostInput, PostListItem } from '@/lib/types/blog'
 import { canEditPost } from '@/lib/accessControl'
-import { Prisma } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 
 export async function createPost(input: CreatePostInput, authorId: string): Promise<BlogPost> {
   const slug = generateSlug(input.title)

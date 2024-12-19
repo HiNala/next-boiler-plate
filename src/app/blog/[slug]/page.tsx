@@ -1,8 +1,10 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getPostBySlug } from '@/lib/services/blog'
 import { formatDate } from '@/lib/utils'
+import type { BlogPost } from '@/lib/types/blog'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -86,17 +88,27 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <div className="mt-8 pt-8 border-t">
             <h2 className="text-lg font-semibold mb-4">Tags</h2>
             <div className="flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
-                <span
+              {post.tags.map((tag: string) => (
+                <Link
                   key={tag}
-                  className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm"
+                  href={`/blog?tag=${encodeURIComponent(tag)}`}
+                  className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 transition-colors"
                 >
                   {tag}
-                </span>
+                </Link>
               ))}
             </div>
           </div>
         )}
+
+        <div className="mt-8 pt-8 border-t">
+          <Link
+            href="/blog"
+            className="text-blue-600 hover:text-blue-800 font-medium"
+          >
+            ← Back to Blog
+          </Link>
+        </div>
       </article>
     )
   } catch (error) {

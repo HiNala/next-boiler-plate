@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/client'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 import type { AuthError, Session, AuthUser } from './types/auth'
+import { mapSupabaseUser } from '@/lib/user'
 
 // Define the enums locally to match Prisma's schema
 const UserRole = {
@@ -101,3 +103,14 @@ export async function getSession(): Promise<{ session: Session | null; error: Au
     error: null 
   }
 } 
+
+export async function getAuthUser(): Promise<AuthUser | null> {
+  const supabase = await createServerClient()
+  const { data: { user }, error } = await supabase.auth.getUser()
+  
+  if (error || !user) {
+    return null
+  }
+
+  return mapSupabaseUser(user)
+}

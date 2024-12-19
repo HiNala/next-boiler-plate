@@ -1,4 +1,12 @@
-import { Post, User } from '@prisma/client'
+// TODO: [Type-Safety] Resolve Prisma type import issues
+// - Issue: Module '@prisma/client' exports not recognized
+// - Priority: Medium
+// - Fix during type-safety pass
+// - Potential solutions:
+//   1. Verify Prisma client generation
+//   2. Update tsconfig.json paths
+//   3. Consider using generated types directly
+import type { Post, User, Prisma } from '@prisma/client'
 
 export type BlogPost = Post & {
   author: Pick<User, 'id' | 'name' | 'email' | 'avatar'>
@@ -24,6 +32,7 @@ export type PostListItem = {
   published: boolean
   createdAt: Date
   publishedAt: Date | null
+  tags: string[]
   author: {
     id: string
     name: string | null
