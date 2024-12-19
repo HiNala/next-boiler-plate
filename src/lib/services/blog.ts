@@ -1,20 +1,10 @@
 import { prisma } from '@/lib/db'
 import { AuthUser } from '@/lib/types/auth'
+import { BlogPost, CreatePostInput, UpdatePostInput, PostListItem } from '@/lib/types/blog'
 import { canEditPost } from '@/lib/accessControl'
 import { Prisma } from '@prisma/client'
 
-export type CreatePostInput = {
-  title: string
-  content: string
-  description?: string
-  thumbnail?: string
-  tags?: string[]
-  published?: boolean
-}
-
-export type UpdatePostInput = Partial<CreatePostInput>
-
-export async function createPost(input: CreatePostInput, authorId: string) {
+export async function createPost(input: CreatePostInput, authorId: string): Promise<BlogPost> {
   const slug = generateSlug(input.title)
   
   return prisma.post.create({
@@ -24,10 +14,20 @@ export async function createPost(input: CreatePostInput, authorId: string) {
       authorId,
       publishedAt: input.published ? new Date() : null,
     },
+    include: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+        },
+      },
+    },
   })
 }
 
-export async function updatePost(id: string, input: UpdatePostInput, user: AuthUser) {
+export async function updatePost(id: string, input: UpdatePostInput, user: AuthUser): Promise<BlogPost> {
   const post = await prisma.post.findUnique({
     where: { id },
     select: { authorId: true },
@@ -52,10 +52,20 @@ export async function updatePost(id: string, input: UpdatePostInput, user: AuthU
   return prisma.post.update({
     where: { id },
     data: updates,
+    include: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+        },
+      },
+    },
   })
 }
 
-export async function deletePost(id: string, user: AuthUser) {
+export async function deletePost(id: string, user: AuthUser): Promise<BlogPost> {
   const post = await prisma.post.findUnique({
     where: { id },
     select: { authorId: true },
@@ -71,10 +81,20 @@ export async function deletePost(id: string, user: AuthUser) {
 
   return prisma.post.delete({
     where: { id },
+    include: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+        },
+      },
+    },
   })
 }
 
-export async function getPost(id: string) {
+export async function getPost(id: string): Promise<BlogPost> {
   const post = await prisma.post.findUnique({
     where: { id },
     include: {
@@ -96,7 +116,7 @@ export async function getPost(id: string) {
   return post
 }
 
-export async function getPostBySlug(slug: string) {
+export async function getPostBySlug(slug: string): Promise<BlogPost> {
   const post = await prisma.post.findUnique({
     where: { slug },
     include: {
@@ -123,7 +143,7 @@ export async function getPosts(options: {
   skip?: number
   authorId?: string
   published?: boolean
-}) {
+}): Promise<PostListItem[]> {
   const { take = 10, skip = 0, authorId, published } = options
 
   const where: Prisma.PostWhereInput = {}

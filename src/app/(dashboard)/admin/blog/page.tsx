@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPosts } from '@/lib/services/blog'
-import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
+import type { PostListItem } from '@/lib/types/blog'
 
 export const metadata: Metadata = {
   title: 'Blog Management',
@@ -16,8 +16,11 @@ export default async function BlogManagementPage() {
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Blog Posts</h1>
-        <Link href="/admin/blog/new">
-          <Button>New Post</Button>
+        <Link
+          href="/admin/blog/new"
+          className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
+        >
+          New Post
         </Link>
       </div>
 
@@ -40,7 +43,7 @@ export default async function BlogManagementPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {posts.map((post) => (
+            {posts.map((post: PostListItem) => (
               <tr key={post.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
