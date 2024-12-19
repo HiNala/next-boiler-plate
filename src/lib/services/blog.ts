@@ -4,40 +4,19 @@
 // - Fix during type-safety pass
 // - Related to Prisma client type generation
 // - Current workaround: Using type imports
-import { prisma } from '@/lib/db'
-import { AuthUser } from '@/lib/types/auth'
-import { BlogPost, CreatePostInput, UpdatePostInput, PostListItem } from '@/lib/types/blog'
+import type { BlogPost, CreatePostInput, UpdatePostInput } from '@/lib/types/blog'
+import type { AuthUser } from '@/lib/types/auth'
 import { canEditPost } from '@/lib/accessControl'
-import type { Prisma } from '@prisma/client'
+import { BlogRepository } from '@/lib/repositories/blog.repository'
+
+const blogRepository = new BlogRepository()
 
 export async function createPost(input: CreatePostInput, authorId: string): Promise<BlogPost> {
-  const slug = generateSlug(input.title)
-  
-  return prisma.post.create({
-    data: {
-      ...input,
-      slug,
-      authorId,
-      publishedAt: input.published ? new Date() : null,
-    },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true,
-        },
-      },
-    },
-  })
+  return blogRepository.createPost({ ...input, authorId })
 }
 
 export async function updatePost(id: string, input: UpdatePostInput, user: AuthUser): Promise<BlogPost> {
-  const post = await prisma.post.findUnique({
-    where: { id },
-    select: { authorId: true },
-  })
+  const post = await blogRepository.getPost(id)
 
   if (!post) {
     throw new Error('Not Found')
@@ -47,35 +26,11 @@ export async function updatePost(id: string, input: UpdatePostInput, user: AuthU
     throw new Error('Unauthorized')
   }
 
-  const updates: Prisma.PostUpdateInput = { ...input }
-  if (input.title) {
-    updates.slug = generateSlug(input.title)
-  }
-  if (input.published !== undefined) {
-    updates.publishedAt = input.published ? new Date() : null
-  }
-
-  return prisma.post.update({
-    where: { id },
-    data: updates,
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true,
-        },
-      },
-    },
-  })
+  return blogRepository.updatePost(id, input)
 }
 
 export async function deletePost(id: string, user: AuthUser): Promise<BlogPost> {
-  const post = await prisma.post.findUnique({
-    where: { id },
-    select: { authorId: true },
-  })
+  const post = await blogRepository.getPost(id)
 
   if (!post) {
     throw new Error('Not Found')
@@ -85,35 +40,11 @@ export async function deletePost(id: string, user: AuthUser): Promise<BlogPost> 
     throw new Error('Unauthorized')
   }
 
-  return prisma.post.delete({
-    where: { id },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true,
-        },
-      },
-    },
-  })
+  return blogRepository.deletePost(id)
 }
 
 export async function getPost(id: string): Promise<BlogPost> {
-  const post = await prisma.post.findUnique({
-    where: { id },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true,
-        },
-      },
-    },
-  })
+  const post = await blogRepository.getPost(id)
 
   if (!post) {
     throw new Error('Not Found')
@@ -123,19 +54,7 @@ export async function getPost(id: string): Promise<BlogPost> {
 }
 
 export async function getPostBySlug(slug: string): Promise<BlogPost> {
-  const post = await prisma.post.findUnique({
-    where: { slug },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true,
-        },
-      },
-    },
-  })
+  const post = await blogRepository.getPostBySlug(slug)
 
   if (!post) {
     throw new Error('Not Found')
@@ -149,34 +68,6 @@ export async function getPosts(options: {
   skip?: number
   authorId?: string
   published?: boolean
-}): Promise<PostListItem[]> {
-  const { take = 10, skip = 0, authorId, published } = options
-
-  const where: Prisma.PostWhereInput = {}
-  if (authorId) where.authorId = authorId
-  if (published !== undefined) where.published = published
-
-  return prisma.post.findMany({
-    where,
-    take,
-    skip,
-    orderBy: { createdAt: 'desc' },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true,
-        },
-      },
-    },
-  })
-}
-
-function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
+}): Promise<BlogPost[]> {
+  return blogRepository.getPosts(options)
 } 
