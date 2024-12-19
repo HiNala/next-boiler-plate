@@ -2,8 +2,19 @@ import { prisma } from '@/lib/db'
 import type { Post, Prisma } from '@prisma/client'
 import type { BlogPost, CreatePostInput, UpdatePostInput } from '@/lib/types/blog'
 import { generateSlug } from '@/lib/utils'
-import { NotFoundError, ValidationError } from '@/lib/errors'
+import { DatabaseError, NotFoundError, ValidationError } from '@/lib/errors'
 import type { PostWhereInput, PostPaginationInput } from '@/lib/validations/blog'
+
+const postInclude = {
+  author: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      avatar: true,
+    },
+  },
+} as const
 
 export class BlogRepository {
   async createPost(input: CreatePostInput & { authorId: string }): Promise<BlogPost> {
@@ -16,16 +27,7 @@ export class BlogRepository {
           slug,
           publishedAt: input.published ? new Date() : null,
         },
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              avatar: true,
-            },
-          },
-        },
+        include: postInclude,
       })
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -33,7 +35,7 @@ export class BlogRepository {
           throw new ValidationError('A post with this title already exists')
         }
       }
-      throw error
+      throw new DatabaseError('Failed to create post', error instanceof Error ? error.message : undefined)
     }
   }
 
@@ -50,27 +52,18 @@ export class BlogRepository {
       return await prisma.post.update({
         where: { id },
         data: updates,
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              avatar: true,
-            },
-          },
-        },
+        include: postInclude,
       })
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
-          throw new NotFoundError('Post')
+          throw new NotFoundError('Post not found')
         }
         if (error.code === 'P2002') {
           throw new ValidationError('A post with this title already exists')
         }
       }
-      throw error
+      throw new DatabaseError('Failed to update post', error instanceof Error ? error.message : undefined)
     }
   }
 
@@ -78,84 +71,73 @@ export class BlogRepository {
     try {
       return await prisma.post.delete({
         where: { id },
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              avatar: true,
-            },
-          },
-        },
+        include: postInclude,
       })
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
-          throw new NotFoundError('Post')
+          throw new NotFoundError('Post not found')
         }
       }
-      throw error
+      throw new DatabaseError('Failed to delete post', error instanceof Error ? error.message : undefined)
     }
   }
 
-  async getPost(id: string): Promise<BlogPost | null> {
-    return prisma.post.findUnique({
+  async getPost(id: string): Promise<BlogPost> {
+    const post = await prisma.post.findUnique({
       where: { id },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true,
-          },
-        },
-      },
+      include: postInclude,
     })
+
+    if (!post) {
+      throw new NotFoundError('Post not found')
+    }
+
+    return post
   }
 
-  async getPostBySlug(slug: string): Promise<BlogPost | null> {
-    return prisma.post.findUnique({
+  async getPostBySlug(slug: string): Promise<BlogPost> {
+    const post = await prisma.post.findUnique({
       where: { slug },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true,
-          },
-        },
-      },
+      include: postInclude,
     })
+
+    if (!post) {
+      throw new NotFoundError('Post not found')
+    }
+
+    return post
   }
 
   async getPosts(
     where: PostWhereInput = {},
     pagination: PostPaginationInput = {}
-  ): Promise<BlogPost[]> {
-    const { take = 10, skip = 0, orderBy = 'createdAt', order = 'desc' } = pagination
+  ): Promise<{ posts: BlogPost[]; total: number }> {
+    try {
+      const { take = 10, skip = 0, orderBy = 'createdAt', order = 'desc' } = pagination
 
-    return prisma.post.findMany({
-      where,
-      take,
-      skip,
-      orderBy: { [orderBy]: order },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true,
-          },
-        },
-      },
-    })
+      const [posts, total] = await Promise.all([
+        prisma.post.findMany({
+          where,
+          take,
+          skip,
+          orderBy: { [orderBy]: order },
+          include: postInclude,
+        }),
+        this.getPostCount(where),
+      ])
+
+      return { posts, total }
+    } catch (error) {
+      throw new DatabaseError('Failed to fetch posts', error instanceof Error ? error.message : undefined)
+    }
   }
 
-  async getPostCount(where: PostWhereInput = {}): Promise<number> {
-    return prisma.post.count({ where })
+  private async getPostCount(where: PostWhereInput = {}): Promise<number> {
+    try {
+      return await prisma.post.count({ where })
+    } catch (error) {
+      throw new DatabaseError('Failed to count posts', error instanceof Error ? error.message : undefined)
+    }
   }
 } 
